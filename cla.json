@@ -6007,6 +6007,22 @@
       "created_at": "2026-10-05T14:16:13Z",
       "repoId": 1118601518,
       "pullRequestNo": 7872
+    },
+    {
+      "name": "lgloq",
+      "id": 95030601,
+      "comment_id": 6016603425,
+      "created_at": "2026-10-06T12:48:40Z",
+      "repoId": 1118601518,
+      "pullRequestNo": 7883
+    },
+    {
+      "name": "lgloq",
+      "id": 95030601,
+      "comment_id": 6016630374,
+      "created_at": "2026-10-06T12:50:08Z",
+      "repoId": 1118601518,
+      "pullRequestNo": 7883
     }
   ]
 }
