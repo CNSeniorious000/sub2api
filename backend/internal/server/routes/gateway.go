@@ -204,19 +204,11 @@ func RegisterGatewayRoutes(
 		})
 		// System One carries only JSON text, so it uses the text body limit.
 		gateway.POST("/systemone", textBodyLimit, func(c *gin.Context) {
-			if key, ok := middleware.GetAPIKeyFromContext(c); ok && key != nil && key.Group != nil && key.Group.Platform == service.PlatformOpenAI {
-				h.OpenAIGateway.SystemOneViaDecisions(c)
-				return
-			}
-			h.Gateway.SystemOne(c)
+			dispatchGatewayByTargetPlatform(c, service.PlatformOpenAI, h.OpenAIGateway.SystemOneViaDecisions, h.Gateway.SystemOne)
 		})
 		// Decisions accepts inline images and uses the gateway body limit.
 		gateway.POST("/decisions", func(c *gin.Context) {
-			if key, ok := middleware.GetAPIKeyFromContext(c); ok && key != nil && key.Group != nil && key.Group.Platform == service.PlatformTypeSafe {
-				h.Gateway.DecisionsViaSystemOne(c)
-				return
-			}
-			h.OpenAIGateway.Decisions(c)
+			dispatchGatewayByTargetPlatform(c, service.PlatformTypeSafe, h.Gateway.DecisionsViaSystemOne, h.OpenAIGateway.Decisions)
 		})
 		// /v1/messages/count_tokens: OpenAI bridges upstream, Grok estimates
 		// locally, and Anthropic-compatible platforms retain their existing path.
@@ -544,6 +536,14 @@ func dispatchCodexModelsGateway(c *gin.Context, openAIHandler, generatedHandler 
 		return
 	}
 	generatedHandler(c)
+}
+
+func dispatchGatewayByTargetPlatform(c *gin.Context, targetPlatform string, targetHandler, fallbackHandler gin.HandlerFunc) {
+	if getGroupPlatform(c) == targetPlatform {
+		targetHandler(c)
+		return
+	}
+	fallbackHandler(c)
 }
 
 // getGroupPlatform extracts the group platform from the API Key stored in context.
