@@ -203,9 +203,21 @@ func RegisterGatewayRoutes(
 			h.Gateway.Messages(c)
 		})
 		// System One carries only JSON text, so it uses the text body limit.
-		gateway.POST("/systemone", textBodyLimit, h.Gateway.SystemOne)
+		gateway.POST("/systemone", textBodyLimit, func(c *gin.Context) {
+			if key, ok := middleware.GetAPIKeyFromContext(c); ok && key != nil && key.Group != nil && key.Group.Platform == service.PlatformOpenAI {
+				h.OpenAIGateway.SystemOneViaDecisions(c)
+				return
+			}
+			h.Gateway.SystemOne(c)
+		})
 		// Decisions accepts inline images and uses the gateway body limit.
-		gateway.POST("/decisions", h.OpenAIGateway.Decisions)
+		gateway.POST("/decisions", func(c *gin.Context) {
+			if key, ok := middleware.GetAPIKeyFromContext(c); ok && key != nil && key.Group != nil && key.Group.Platform == service.PlatformTypeSafe {
+				h.Gateway.DecisionsViaSystemOne(c)
+				return
+			}
+			h.OpenAIGateway.Decisions(c)
+		})
 		// /v1/messages/count_tokens: OpenAI bridges upstream, Grok estimates
 		// locally, and Anthropic-compatible platforms retain their existing path.
 		gateway.POST("/messages/count_tokens", countTokensHandler)
